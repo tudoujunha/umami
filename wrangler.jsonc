@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "umami",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+  // 注意：不要照抄上游 PR #4077 —— 那份 wrangler 硬编码了别人账号的 account_id 和 Hyperdrive id。
+  // 数据库走 Supabase 直连（DATABASE_URL secret），不挂 Hyperdrive，所以这里不需要 hyperdrive binding。
+  // 部署账号通过 CLOUDFLARE_ACCOUNT_ID 环境变量或 wrangler 登录态指定，不写死在此。
+}

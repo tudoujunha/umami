@@ -1,6 +1,10 @@
 import 'dotenv/config';
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
 import createNextIntlPlugin from 'next-intl/plugin';
 import pkg from './package.json' with { type: 'json' };
+
+// 让 `next dev` 也能访问 Cloudflare bindings（getCloudflareContext）。仅 dev 生效，生产构建是 no-op。
+initOpenNextCloudflareForDev();
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -186,6 +190,9 @@ if (isProd && cloudMode) {
 /** @type {import('next').NextConfig} */
 export default withNextIntl({
   reactStrictMode: false,
+  // pg 含 workerd 专用条件导出，必须排除出 bundle，交给运行时按条件解析（OpenNext 官方 howto）。
+  // 不外置 @prisma/client：runtime="cloudflare" 下让 esbuild 打包它，只带 postgresql 编译器（否则整包全方言 ~87MB）。
+  serverExternalPackages: ['pg', 'pg-cloudflare', '@prisma/adapter-pg'],
   env: {
     basePath,
     cloudMode,

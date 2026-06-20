@@ -13,6 +13,10 @@
   "scripts": {
     "dev": "dotenv next dev --turbo",
     "build": "npm-run-all check-env build-db check-db build-tracker build-recorder build-geo build-app",
+    "build:cf-app": "npm-run-all build-db-client build-tracker build-recorder && next build",
+    "build:cf": "opennextjs-cloudflare build",
+    "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "start": "next start",
     "build-docker": "npm-run-all build-db build-tracker build-recorder build-geo build-app",
     "start-docker": "npm-run-all check-db update-tracker start-server",
@@ -120,6 +124,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.10",
     "@netlify/plugin-nextjs": "^5.15.9",
+    "@opennextjs/cloudflare": "^1.19.11",
     "@rollup/plugin-alias": "^5.0.0",
     "@rollup/plugin-commonjs": "^25.0.4",
     "@rollup/plugin-json": "^6.0.0",
@@ -156,6 +161,7 @@
     "tsup": "^8.5.0",
     "tsx": "^4.19.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.6",
+    "wrangler": "^4.103.0"
   }
 }

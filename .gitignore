@@ -50,3 +50,9 @@ yarn-error.log*
 *.env.*
 
 *.dev.yml
+
+# cloudflare / opennext
+/.open-next
+/.wrangler
+.dev.vars
+.dev.vars.*
