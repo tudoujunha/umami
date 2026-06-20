@@ -1,8 +1,8 @@
 # umami → Cloudflare Workers 迁移 Spec（OpenNext）
 
 ```yaml
-status: draft / discuss-done, pre-execution
-date: 2026-06-20
+status: 已搁置 shelved（评估完成、技术可行，但决定不迁移）— 2026-06-21
+date: 2026-06-20（评估）/ 2026-06-21（搁置决策）
 owner: tudoujun
 repo: /Users/tudoujun/projects/saas_01/umami  (fork tudoujunha/umami, branch master)
 app: umami 3.1.0 · Next.js 16.2.4 · React 19 · Prisma 7 (@prisma/adapter-pg + pg 8.20)
@@ -11,6 +11,16 @@ target: Cloudflare Workers via @opennextjs/cloudflare，数据库继续 Supabase
 ```
 
 > 本文是「讨论 → 执行」分离的沉淀件。设计已收敛，执行另起一轮、交全新上下文，按本文推进。
+
+## 决策（2026-06-21）：搁置迁移，继续留在 Vercel + Supabase
+
+**结论：不迁移。** 技术上已验证可行（见 §0，umami 在 workerd 上能真正跑起来，Prisma 7 `runtime=cloudflare` 也绕过了 wasm 崩溃），但 OpenNext 产物 **gzip ~9.7 MiB**：免费档（3 MiB）装不下、强制 Workers 付费档，且余量薄，还要长期维护一份对上游的 CF 补丁。对一个自用分析工具，代价 > 收益。
+
+- 迁移最初动机是**降成本**；后来发现更省事的路径：**Vercel 侧降套餐 / 转移到其它账号**即可控成本，Neon（其它项目）同理。本项目迁移需求因此消失。
+- 唯一后续课题：**降低数据库存储**（独立于本迁移）。umami 存储大头通常是 `website_event`（每条埋点）和会话回放 `rrweb` 录制；方向是数据保留期裁剪 + 关闭/精简回放。
+- `cloudflare` 分支（2 个提交）与下方技术记录**保留作存档**——若将来 umami 体积下降或策略改变，可据此快速重启。
+
+下方为当时的技术验证记录，仅作参考。
 
 ## 0. 实测验证结果（2026-06-20，本地 workerd 通过）
 
