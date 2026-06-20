@@ -28,7 +28,31 @@ target: Cloudflare Workers via @opennextjs/cloudflare，数据库继续 Supabase
 - worker 上传 **gzip 9.47 MiB** → 免费档(3MiB)出局，**必须付费档**(10MiB，余量仅 ~0.5MiB，后续建议 minify 瘦身)。
 - 冷启动首查 ~5.5s（Prisma/wasm 初始化 + 连池），热查询 ~17ms。
 
-仍未做：`/api/send` 写入路径实测；云端部署（Worker secrets + 把 CF 构建/部署命令改成 `build:cf`/`deploy:cf` + 登录）。
+仍未做：`/api/send` 写入路径实测；云端部署（见 §0.1）。
+
+## 0.1 Cloudflare Workers Builds（git 集成 CI）部署配置
+
+用 Workers Builds（连 git 仓库自动构建）部署时，**控制台 → Worker → Settings → Build** 必须改成下表。默认值会跑 umami 的 `pnpm build`：① 产出的是 `.next` 不是 worker，② 还会因 `runtime=cloudflare` 让 `build-prisma-client` 撞 `.wasm` 而构建失败。Workers Builds **不读** wrangler 配置里的 custom build，只认控制台设置。
+
+| 字段 | 值 |
+|---|---|
+| Build command | `pnpm run build:cf` |
+| Deploy command | `npx opennextjs-cloudflare deploy` |
+| Non-production branch deploy command | `npx opennextjs-cloudflare upload` |
+| Root directory | 仓库根（默认 `/`） |
+
+**环境变量分两处设**（Build variables 只在构建期可用、运行时拿不到）：
+
+- **Settings → Build → Build variables**：`DATABASE_URL`（构建期 `prisma generate` / `next build` 解析用，不连库）；可选 `TRACKER_SCRIPT_NAME`。
+- **Settings → Variables & Secrets（运行时）**：把 `DATABASE_URL`（6543 池串）设为 **Secret**（worker 运行时连库；不设则 build 过、一访问即 500）。`APP_SECRET` 不用设（从 DATABASE_URL 派生）。
+
+**其它**：
+
+- Worker 必须在 **付费档**（9.47 MiB > 免费档 3 MiB 上限）。
+- **Production branch** 设为正在 push 的分支（如 `cloudflare`），否则只走 upload 不切流。
+- Workers Builds 用项目账号凭据，**不需要 `wrangler login`**。
+
+> 排障记录：若云端构建报 `No loader is configured for ".wasm" ... build-prisma-client exited with 1`，说明 Build command 还是默认的 `pnpm build`（在跑 umami 自带的 esbuild 预打包），改成 `pnpm run build:cf` 即可。
 
 ## 1. 目标与决策（已锁定）
 
